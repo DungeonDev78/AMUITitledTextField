@@ -52,7 +52,7 @@
         }
     }
 
-    extension AMTitledTextField {
+    extension AMUITitledTextField {
 
         func updateTextViewBorder() {
             borderStyle = .none
@@ -70,7 +70,7 @@
     }
 
     // MARK: - Rectangles Setup
-    extension AMTitledTextField {
+    extension AMUITitledTextField {
 
         var fullSidePadding : CGFloat { return cornerRadius + sidePadding }
         var topPadding      : CGFloat { return verticalPadding/2 }
@@ -105,7 +105,7 @@
         }
     }
 
-    private extension AMTitledTextField {
+    private extension AMUITitledTextField {
 
         func setPlaceholderColor(_ color: UIColor) {
             var placeholderText = ""
@@ -117,6 +117,7 @@
         }
 
         func createTitle() {
+            lblTitle?.removeFromSuperview()
             lblTitle = nil
             lblTitle = UILabel(frame: CGRect(x: originNew.x, y: originNew.y, width: 25, height: 25))
             guard let lblTitle = lblTitle else { return }
