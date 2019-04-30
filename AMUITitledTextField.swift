@@ -2,59 +2,107 @@
     //  AMUITitledTextField.swift
     //
     //  Created with 💪 by Alessandro Manilii.
-    //  Copyright © 2018 Alessandro Manilii. All rights reserved.
+    //  Copyright © 2019 Alessandro Manilii. All rights reserved.
     //
-
+    
     import UIKit
-
+    
     @IBDesignable
-    class AMUITitledTextField: UITextField {
-
+    public class AMUITitledTextField: AMUIBaseTextField {
+        
         // MARK: - IBInspectables
-        @IBInspectable var title: String = "" {
+        @IBInspectable public var title: String = "" {
             didSet { self.updateTextViewBorder() }
         }
-
-        @IBInspectable var titleColor: UIColor = UIColor.black {
+        
+        @IBInspectable public var titleColor: UIColor = UIColor.black {
             didSet { updateTextViewBorder() }
         }
-
-        @IBInspectable var borderWidth: CGFloat = 0.0 {
+        
+        @IBInspectable public var borderWidth: CGFloat = 0.0 {
+            didSet {
+                if originalBorderWidth == nil {
+                    originalBorderWidth = borderWidth
+                }
+                updateTextViewBorder()
+            }
+        }
+        
+        @IBInspectable public var borderColor: UIColor = UIColor.clear {
+            didSet {
+                if originalBorderColor == nil {
+                    originalBorderColor = borderColor
+                }
+                updateTextViewBorder()
+            }
+        }
+        
+        @IBInspectable public var cornerRadius: CGFloat = 0.0 {
             didSet { updateTextViewBorder() }
         }
-
-        @IBInspectable var borderColor: UIColor = UIColor.clear {
-            didSet { updateTextViewBorder() }
-        }
-
-        @IBInspectable var cornerRadius: CGFloat = 0.0 {
-            didSet { updateTextViewBorder() }
-        }
-
-        @IBInspectable var placeholderColor: UIColor = .lightGray {
+        
+        @IBInspectable public var placeholderColor: UIColor = .lightGray {
             didSet { setValue(placeholderColor, forKeyPath: "_placeholderLabel.textColor")
-     }
+            }
         }
-
+        
+        @IBInspectable public var validBorderColor: UIColor?
+        @IBInspectable public var invalidBorderColor: UIColor? = UIColor.red
+        
         // MARK: - Properties
         private var borderLayer: CAShapeLayer?
         private var sidePadding: CGFloat = 8.0
         private let verticalPadding: CGFloat = 12.0
         private var lblTitle: UILabel?
-
-        var originNew: CGPoint {
+        private var originalBorderWidth: CGFloat?
+        private var originalBorderColor: UIColor?
+        
+        public var originNew: CGPoint {
             get { return CGPoint(x: cornerRadius + borderWidth/2, y: 0) }
         }
-
-        override func layoutSubviews() {
+        
+        override public func layoutSubviews() {
             super.layoutSubviews()
             updateTextViewBorder()
+            guard validBorderColor != nil else {
+                validBorderColor = borderColor
+                return
+            }
+        }
+        
+        override public func configureFocusedState(_ focusState: FocusStatus) {
+            switch focusState {
+            case .focused:
+                if let originalBorderWidth = originalBorderWidth {
+                    borderWidth = originalBorderWidth + CGFloat(1.0)
+                }
+            case .notFocused:
+                if let originalBorderWidth = originalBorderWidth {
+                    borderWidth = originalBorderWidth
+                }
+            }
+        }
+        
+        override public func configureInvalidState() {
+            if let invalidBorderColor = invalidBorderColor {
+                borderColor = invalidBorderColor
+            }
+        }
+        
+        override public func configureUnknownState() {
+            // Nothing to see here... move along
+        }
+        
+        override public func configureValidState()  {
+            if let validBorderColor = validBorderColor {
+                borderColor = validBorderColor
+            }
         }
     }
-
+    
     extension AMUITitledTextField {
-
-        func updateTextViewBorder() {
+        
+        public func updateTextViewBorder() {
             borderStyle = .none
             createTitle()
             borderLayer?.removeFromSuperlayer()
@@ -68,35 +116,35 @@
             self.layer.addSublayer(borderLayer)
         }
     }
-
+    
     // MARK: - Rectangles Setup
     extension AMUITitledTextField {
-
-        var fullSidePadding : CGFloat { return cornerRadius + sidePadding }
-        var topPadding      : CGFloat { return verticalPadding/2 }
-        var textPadding     : CGFloat {return sidePadding/2}
-
+        
+        public var fullSidePadding : CGFloat { return cornerRadius + sidePadding }
+        public var topPadding      : CGFloat { return verticalPadding/2 }
+        public var textPadding     : CGFloat {return sidePadding/2}
+        
         override public func textRect(forBounds bounds: CGRect) -> CGRect {
             return bounds.inset(by: UIEdgeInsets.init(top: topPadding,
                                                       left: fullSidePadding + textPadding,
                                                       bottom: 0,
                                                       right: fullSidePadding))
         }
-
+        
         override public func editingRect(forBounds bounds: CGRect) -> CGRect {
             return bounds.inset(by: UIEdgeInsets.init(top: topPadding,
                                                       left: fullSidePadding + textPadding,
                                                       bottom: 0,
                                                       right: fullSidePadding))
         }
-
+        
         override public func placeholderRect(forBounds bounds: CGRect) -> CGRect {
             return bounds.inset(by: UIEdgeInsets.init(top: topPadding,
                                                       left: fullSidePadding + textPadding,
                                                       bottom: 0,
                                                       right: fullSidePadding))
         }
-
+        
         override public func borderRect(forBounds bounds: CGRect) -> CGRect {
             return bounds.inset(by: UIEdgeInsets.init(top: 0,
                                                       left: fullSidePadding + textPadding,
@@ -104,24 +152,25 @@
                                                       right: fullSidePadding))
         }
     }
-
+    
     private extension AMUITitledTextField {
-
+        
         func setPlaceholderColor(_ color: UIColor) {
             var placeholderText = ""
             if let placeholder = self.placeholder {
                 placeholderText = placeholder
             }
-
+            
             self.attributedPlaceholder = NSAttributedString(string: placeholderText, attributes: [NSAttributedString.Key.foregroundColor: color])
         }
-
+        
+        /// Create the title of the TextField over the border
         func createTitle() {
             lblTitle?.removeFromSuperview()
             lblTitle = nil
             lblTitle = UILabel(frame: CGRect(x: originNew.x, y: originNew.y, width: 25, height: 25))
             guard let lblTitle = lblTitle else { return }
-
+            
             lblTitle.textAlignment = .center
             lblTitle.text = title
             lblTitle.textColor = titleColor
@@ -129,16 +178,19 @@
             if let fontSize = font?.pointSize {
                 lblTitle.font = lblTitle.font.withSize(fontSize * 0.85)
             }
-
+            
             lblTitle.sizeToFit()
             lblTitle.frame = CGRect(x: lblTitle.frame.origin.x + sidePadding, y: lblTitle.frame.origin.y, width: lblTitle.frame.width + sidePadding, height: lblTitle.frame.height);
             addSubview(lblTitle)
         }
-
+        
+        /// Create the "incomplete" rounded border
+        ///
+        /// - Returns: the created path
         func createPath() -> UIBezierPath  {
             let path = UIBezierPath()
             guard let lblTitle = lblTitle else { return path }
-
+            
             let pointA = CGPoint(x: originNew.x + lblTitle.frame.width + sidePadding, y: lblTitle.center.y)
             let pointB = CGPoint(x: frame.width - cornerRadius - borderWidth/2, y: pointA.y)
             let centerUR = CGPoint(x: pointB.x, y: pointA.y + cornerRadius)
@@ -149,7 +201,7 @@
             let pointE = CGPoint(x: borderWidth/2, y: centerUR.y)
             let centerUL = CGPoint(x: centerBL.x, y: centerUR.y)
             let pointF = CGPoint(x: pointD.x + sidePadding, y: pointA.y)
-
+            
             path.move(to: pointA)
             path.addLine(to: pointB)
             path.addArc(withCenter: centerUR, radius: cornerRadius, startAngle: CGFloat(3 * Double.pi/2), endAngle: 0, clockwise: true)
@@ -160,7 +212,12 @@
             path.addLine(to: pointE)
             path.addArc(withCenter: centerUL, radius: cornerRadius, startAngle:  CGFloat(2 * Double.pi/2), endAngle:  CGFloat(3 * Double.pi/2), clockwise: true)
             path.addLine(to: pointF)
-
+            
             return path
         }
+        
+        private func textFieldDidBegin() {
+            // Nothing to see here... move along
+        }
+        
     }
